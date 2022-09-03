@@ -1,0 +1,113 @@
+
+service: indrareto
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  # lambdaHashingVersion: 20201221
+  stage: dev
+  region: us-east-1
+  apiGateway:
+    shouldStartNameWithService: true
+  environment:
+    DYNAMODB_TABLE: 'empresa_indra'
+    API_ENDPOINT: "https://swapi.py4e.com/api/"
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+
+functions:
+  createEmpresa:
+    handler: src/index.addEmpresa
+    events:
+      - http:
+          path: empresa
+          method: post
+          cors: true
+          bodyType: EmpresaReq
+          responses:
+            200:
+              bodyType: EmpresaRes
+    timeout: 15
+
+  getEmpresa:
+    handler: src/index.getEmpresa
+    events:
+      - http:
+          path: empresa/{id}
+          method: get
+          cors: true
+          responses:
+            200:
+              bodyType: EmpresaRes
+
+  getAllEmpresas:
+    handler: src/index.getEmpresas
+    events:
+      - http:
+          path: empresa
+          method: get
+          cors: true
+          responses:
+            200:
+              bodyType: Empresas
+
+  getVehiculo:
+    handler: src/index.getVehicle
+    events:
+      - http:
+          path: vehicle/{id}
+          method: get
+          cors: true
+          responses:
+            200:
+              bodyType: VehiculoRes
+
+  getAllVehiculos:
+    handler: src/index.getVehicles
+    events:
+      - http:
+          path: vehicle
+          method: get
+          cors: true
+          responses:
+            200:
+              bodyType: 'Vehiculos'
+    timeout: 15
+
+resources:
+  Resources:
+    TodosDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.DYNAMODB_TABLE}
+
+plugins:
+  - serverless-auto-swagger
+  - serverless-plugin-reducer
+  - serverless-offline
+  - serverless-offline-direct-lambda
+custom:
+  autoswagger:
+    title: 'Reto técnico INDRA'
+    generateSwaggerOnDeploy: true
+    typefiles: ['./src/types/vehicle.d.ts', './src/types/empresa.d.ts']
+    apiType: http
