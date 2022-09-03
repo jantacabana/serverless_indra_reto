@@ -5,7 +5,7 @@
 npm install
 ```
 
-## Despliegue de la arquitectura:
+## Despliegue de la arquitectura
 Ejecute el siguiente comando, reemplazando sus credenciales IAM
 ```sh
 serverless config credentials --provider aws --key YOUKEY --secret YOUSECRET
